@@ -1,0 +1,51 @@
+win32-gui study
+
+gui.h
+===
+// Label.xs (508)
+void Label_onPreCreate(NOTXSPROC LPPERLWIN32GUI_CREATESTRUCT perlcs);
+BOOL Label_onParseOption(NOTXSPROC char *option, SV* value, LPPERLWIN32GUI_CREATESTRUCT perlcs);
+void Label_onPostCreate(NOTXSPROC HWND myhandle, LPPERLWIN32GUI_CREATESTRUCT perlcs);
+BOOL Label_onParseEvent(NOTXSPROC char *name, int* eventID);
+int  Label_onEvent (NOTXSPROC LPPERLWIN32GUI_USERDATA perlud, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+GUI.pm
+======
+sub AddLabel       { return Win32::GUI::Label->new(@_); }
+package Win32::GUI::Label;
+@ISA = qw(
+    Win32::GUI
+    Win32::GUI::WindowProps
+);
+.. class docs...
+sub new {
+    return Win32::GUI->_new(Win32::GUI::constant("WIN32__GUI__STATIC", 0), @_);
+}
+...
+package Win32::GUI;
+...
+bootstrap_subpackage 'Label';
+...
+
+
+GUI_Helpers.cpp
+============
+#define CREATE_CONTROL_TABLE(n,T) \
+...
+Label##n,       \
+...
+
+Label.xs
+=====
+
+Makefile(_m).PL
+========
+@subpackages = qw(
+...
+    Label
+...
+
+MANIFEST
+=========
+Label.xs
+
