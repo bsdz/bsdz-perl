@@ -1,0 +1,777 @@
+<?xml version="1.0"?>
+<xs:schema targetNamespace="http://www.numeninest.com/Perl/WGX" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.numeninest.com/Perl/WGX">
+	<xs:element name="GUI">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded">
+				<xs:any minOccurs="0" maxOccurs="unbounded"/>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+	<xs:attributeGroup name="StandardAttributes">
+		<xs:attribute name="name" type="xs:string"/>
+		<xs:attribute name="left" type="xs:string"/>
+		<xs:attribute name="top" type="xs:string"/>
+		<xs:attribute name="width" type="xs:string"/>
+		<xs:attribute name="height" type="xs:string"/>
+		<xs:attribute name="pos" type="xs:string"/>
+		<xs:attribute name="size" type="xs:string"/>
+		<xs:attribute name="dim" type="xs:string"/>
+		<xs:attribute name="foreground" type="xs:string"/>
+		<xs:attribute name="background" type="xs:string"/>
+		<xs:attribute name="class" type="xs:string"/>
+		<xs:attribute name="disabled" type="xs:string"/>
+		<xs:attribute name="font" type="xs:string"/>
+		<xs:attribute name="group" type="xs:string"/>
+		<xs:attribute name="menu" type="xs:string"/>
+		<xs:attribute name="style" type="xs:string"/>
+		<xs:attribute name="popstyle" type="xs:string"/>
+		<xs:attribute name="pushstyle" type="xs:string"/>
+		<xs:attribute name="tabstop" type="xs:string"/>
+		<xs:attribute name="text" type="xs:string"/>
+		<xs:attribute name="title" type="xs:string"/>
+		<xs:attribute name="visible" type="xs:string"/>
+		<xs:attribute name="onMouseMove" type="xs:string"/>
+		<xs:attribute name="onMouseOver" type="xs:string"/>
+		<xs:attribute name="onMouseOut" type="xs:string"/>
+		<xs:attribute name="onMouseDown" type="xs:string"/>
+		<xs:attribute name="onMouseUp" type="xs:string"/>
+		<xs:attribute name="onMouseDblClick" type="xs:string"/>
+		<xs:attribute name="onMouseRightDown" type="xs:string"/>
+		<xs:attribute name="onMouseRightUp" type="xs:string"/>
+		<xs:attribute name="onMouseRightDblClick" type="xs:string"/>
+		<xs:attribute name="onMouseMiddleDown" type="xs:string"/>
+		<xs:attribute name="onMouseMiddleUp" type="xs:string"/>
+		<xs:attribute name="onMouseMiddleDblClick" type="xs:string"/>
+		<xs:attribute name="onKeyDown" type="xs:string"/>
+		<xs:attribute name="onKeyUp" type="xs:string"/>
+		<xs:attribute name="onTimer" type="xs:string"/>
+		<xs:attribute name="onPaint" type="xs:string"/>
+		<xs:attribute name="onClick" type="xs:string"/>
+		<xs:attribute name="onRightClick" type="xs:string"/>
+		<xs:attribute name="onDblClick" type="xs:string"/>
+		<xs:attribute name="onDblRightClick" type="xs:string"/>
+		<xs:attribute name="onGotFocus" type="xs:string"/>
+		<xs:attribute name="onLostFocus" type="xs:string"/>
+		<xs:attribute name="onDropFiles" type="xs:string"/>
+		<xs:attribute name="onChar" type="xs:string"/>
+	</xs:attributeGroup>
+	<xs:element name="AcceleratorTable">
+		<xs:complexType mixed="true">
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="key" type="xs:string"/>
+						<xs:attribute name="sub" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:attribute name="name" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Animation">
+		<xs:complexType>
+			<xs:attribute name="autoplay" type="xs:string"/>
+			<xs:attribute name="center" type="xs:string"/>
+			<xs:attribute name="transparent" type="xs:string"/>
+			<xs:attribute name="onStart" type="xs:string"/>
+			<xs:attribute name="onStop" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="GenericFile">
+		<xs:attribute name="name" type="xs:string"/>
+		<xs:attribute name="file" type="xs:string"/>
+	</xs:complexType>
+	<xs:element name="Bitmap" type="GenericFile"/>
+	<xs:element name="Cursor" type="GenericFile"/>
+	<xs:element name="Icon" type="GenericFile"/>
+	<xs:element name="Brush">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="style" type="xs:string"/>
+			<xs:attribute name="pattern" type="xs:string"/>
+			<xs:attribute name="hatch" type="xs:string"/>
+			<xs:attribute name="color" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="GenericButton">
+		<xs:attribute name="align" type="xs:string"/>
+		<xs:attribute name="valign" type="xs:string"/>
+		<xs:attribute name="default" type="xs:string"/>
+		<xs:attribute name="ok" type="xs:string"/>
+		<xs:attribute name="cancel" type="xs:string"/>
+		<xs:attribute name="bitmap" type="xs:string"/>
+		<xs:attribute name="picture" type="xs:string"/>
+		<xs:attribute name="icon" type="xs:string"/>
+		<xs:attribute name="flat" type="xs:string"/>
+		<xs:attribute name="multiline" type="xs:string"/>
+		<xs:attribute name="notify" type="xs:string"/>
+		<xs:attribute name="pushlike" type="xs:string"/>
+		<xs:attribute name="rightbutton" type="xs:string"/>
+		<xs:attributeGroup ref="StandardAttributes"/>
+		<xs:attribute name="onDisable" type="xs:string"/>
+		<xs:attribute name="onGetFocus" type="xs:string"/>
+		<xs:attribute name="onPush" type="xs:string"/>
+		<!-- <xs:attribute name="3state" type="xs:string"/> needs mapping to threestate -->
+	</xs:complexType>
+	<xs:element name="Button" type="GenericButton"/>
+	<xs:element name="Checkbox" type="GenericButton"/>
+	<xs:element name="RadioButton" type="GenericButton"/>
+	<xs:element name="Class">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="icon" type="xs:string"/>
+			<xs:attribute name="cursor" type="xs:string"/>
+			<xs:attribute name="color" type="xs:string"/>
+			<xs:attribute name="menu" type="xs:string"/>
+			<xs:attribute name="extends" type="xs:string"/>
+			<xs:attribute name="widget" type="xs:string"/>
+			<xs:attribute name="style" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Combobox">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="text" type="xs:string"/>
+						<xs:attribute name="default" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:attribute name="autohscroll" type="xs:string"/>
+			<xs:attribute name="disablenoscroll" type="xs:string"/>
+			<xs:attribute name="dropdown" type="xs:string"/>
+			<xs:attribute name="dropdownlist" type="xs:string"/>
+			<xs:attribute name="hasstring" type="xs:string"/>
+			<xs:attribute name="lowercase" type="xs:string"/>
+			<xs:attribute name="nointegraleheight" type="xs:string"/>
+			<xs:attribute name="simple" type="xs:string"/>
+			<xs:attribute name="sort" type="xs:string"/>
+			<xs:attribute name="uppercase" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onChange" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- TBI
+<xs:element name="ComboboxEx">
+	<xs:complexType>
+		<xs:attribute name="autohscroll" type="xs:string"/>
+		<xs:attribute name="disablenoscroll" type="xs:string"/>
+		<xs:attribute name="dropdown" type="xs:string"/>
+		<xs:attribute name="dropdownlist" type="xs:string"/>
+		<xs:attribute name="hasstring" type="xs:string"/>
+		<xs:attribute name="lowercase" type="xs:string"/>
+		<xs:attribute name="nointegraleheight" type="xs:string"/>
+		<xs:attribute name="simple" type="xs:string"/>
+		<xs:attribute name="sort" type="xs:string"/>
+		<xs:attribute name="uppercase" type="xs:string"/>
+		<xs:attributeGroup ref="StandardAttributes"/>
+		<xs:attribute name="onChange" type="xs:string"/>
+		<xs:attribute name="onDblClick" type="xs:string"/>
+		<xs:attribute name="onGotFocus" type="xs:string"/>
+		<xs:attribute name="onLostFocus" type="xs:string"/>
+		<xs:attribute name="imagelist" type="xs:string"/>
+		<xs:attribute name="casesensitive" type="xs:string"/>
+		<xs:attribute name="noeditimage" type="xs:string"/>
+		<xs:attribute name="noeditimageindent" type="xs:string"/>
+		<xs:attribute name="nosizelimit" type="xs:string"/>
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="WGXPre" maxOccurs="unbounded"/>
+			<xs:element name="WGXExec" maxOccurs="unbounded"/>
+			<xs:element name="WGXPost" maxOccurs="unbounded"/>
+			<xs:element name="Item" type="xs:string" minOccurs='1' maxOccurs='unbounded'>
+				<xs:complexType>
+					<xs:attribute name="text" type="xs:string"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:choice>
+	</xs:complexType>
+</xs:element>
+-->
+	<!-- TBI <xs:element name="DC"/> -->
+	<xs:element name="DateTime">
+		<xs:complexType>
+			<xs:attribute name="align" type="xs:string"/>
+			<xs:attribute name="format" type="xs:string"/>
+			<xs:attribute name="showone" type="xs:string"/>
+			<xs:attribute name="updown" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onChange" type="xs:string"/>
+			<xs:attribute name="onCloseUp" type="xs:string"/>
+			<xs:attribute name="onDropDown" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="GenericTop" mixed="true">
+		<xs:choice maxOccurs="unbounded">
+			<xs:any minOccurs="0" maxOccurs="unbounded"/>
+		</xs:choice>
+		<xs:attribute name="accel" type="xs:string"/>
+		<xs:attribute name="accelerators" type="xs:string"/>
+		<xs:attribute name="acceleratortable" type="xs:string"/>
+		<xs:attribute name="minsize" type="xs:string"/>
+		<xs:attribute name="maxsize" type="xs:string"/>
+		<xs:attribute name="minwidth" type="xs:string"/>
+		<xs:attribute name="minheight" type="xs:string"/>
+		<xs:attribute name="maxwidth" type="xs:string"/>
+		<xs:attribute name="maxheight" type="xs:string"/>
+		<xs:attribute name="hasmaximize" type="xs:string"/>
+		<xs:attribute name="maximizebox" type="xs:string"/>
+		<xs:attribute name="hasminimize" type="xs:string"/>
+		<xs:attribute name="minimizebox" type="xs:string"/>
+		<xs:attribute name="sizable" type="xs:string"/>
+		<xs:attribute name="resizable" type="xs:string"/>
+		<xs:attribute name="sysmenu" type="xs:string"/>
+		<xs:attribute name="menubox" type="xs:string"/>
+		<xs:attribute name="controlbox" type="xs:string"/>
+		<xs:attribute name="titlebar" type="xs:string"/>
+		<xs:attribute name="helpbutton" type="xs:string"/>
+		<xs:attribute name="helpbox" type="xs:string"/>
+		<xs:attribute name="hashelp" type="xs:string"/>
+		<xs:attribute name="toolwindow" type="xs:string"/>
+		<xs:attribute name="appwindow" type="xs:string"/>
+		<xs:attribute name="topmost" type="xs:string"/>
+		<xs:attribute name="controlparent" type="xs:string"/>
+		<xs:attribute name="noflicker" type="xs:string"/>
+		<xs:attribute name="dialogui" type="xs:string"/>
+		<xs:attribute name="show" type="xs:string"/>
+		<xs:attribute name="parent" type="xs:string"/>
+		<xs:attributeGroup ref="StandardAttributes"/>
+		<xs:attribute name="onActivate" type="xs:string"/>
+		<xs:attribute name="onDeactivate" type="xs:string"/>
+		<xs:attribute name="onInitMenu" type="xs:string"/>
+		<xs:attribute name="onMaximize" type="xs:string"/>
+		<xs:attribute name="onMinimize" type="xs:string"/>
+		<xs:attribute name="onResize" type="xs:string"/>
+		<xs:attribute name="onScroll" type="xs:string"/>
+		<xs:attribute name="onTerminate" type="xs:string"/>
+	</xs:complexType>
+	<xs:element name="WGXPanel" type="GenericTop"/>
+	<xs:element name="DialogBox" type="GenericTop"/>
+	<xs:element name="Window" type="GenericTop"/>
+	<xs:element name="MDIChild" type="GenericTop"/>
+	<xs:element name="MDIClient">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="GenericTop">
+					<xs:attribute name="firstchild" type="xs:string"/>
+					<xs:attribute name="windowmenu" type="xs:string"/>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="MDIFrame" type="GenericTop"/>
+	<xs:element name="Font">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="size" type="xs:string"/>
+			<xs:attribute name="height" type="xs:string"/>
+			<xs:attribute name="width" type="xs:string"/>
+			<xs:attribute name="escapement" type="xs:string"/>
+			<xs:attribute name="orientation" type="xs:string"/>
+			<xs:attribute name="weight" type="xs:string"/>
+			<xs:attribute name="bold" type="xs:string"/>
+			<xs:attribute name="italic" type="xs:string"/>
+			<xs:attribute name="underline" type="xs:string"/>
+			<xs:attribute name="strikeout" type="xs:string"/>
+			<xs:attribute name="charset" type="xs:string"/>
+			<xs:attribute name="outputprecision" type="xs:string"/>
+			<xs:attribute name="clipprecision" type="xs:string"/>
+			<xs:attribute name="family" type="xs:string"/>
+			<xs:attribute name="quality" type="xs:string"/>
+			<xs:attribute name="face" type="xs:string"/>
+			<!-- conflict with WGX -->
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Graphic">
+		<xs:complexType>
+			<xs:attribute name="interactive" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onLButtonDown" type="xs:string"/>
+			<xs:attribute name="onLButtonUp" type="xs:string"/>
+			<xs:attribute name="onRButtonDown" type="xs:string"/>
+			<xs:attribute name="onRButtonUp" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Groupbox">
+		<xs:complexType>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Header">
+		<xs:complexType>
+			<xs:attribute name="buttons" type="xs:string"/>
+			<xs:attribute name="dragdrop" type="xs:string"/>
+			<xs:attribute name="fulldrag" type="xs:string"/>
+			<xs:attribute name="hidden" type="xs:string"/>
+			<xs:attribute name="horizontal" type="xs:string"/>
+			<xs:attribute name="hotrack" type="xs:string"/>
+			<xs:attribute name="imagelist" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onBeginTrack" type="xs:string"/>
+			<xs:attribute name="onDividerDblClick" type="xs:string"/>
+			<xs:attribute name="onEndTrack" type="xs:string"/>
+			<xs:attribute name="onItemClick" type="xs:string"/>
+			<xs:attribute name="onItemDblClick" type="xs:string"/>
+			<xs:attribute name="onTrack" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ImageList">
+		<xs:complexType mixed="true">
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="bitmap" type="xs:string"/>
+						<xs:attribute name="icon" type="xs:string"/>
+						<xs:attribute name="mask" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="width" type="xs:string"/>
+			<xs:attribute name="height" type="xs:string"/>
+			<xs:attribute name="growth" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Label">
+		<xs:complexType>
+			<xs:attribute name="align" type="xs:string"/>
+			<xs:attribute name="bitmap" type="xs:string"/>
+			<xs:attribute name="fill" type="xs:string"/>
+			<xs:attribute name="frame" type="xs:string"/>
+			<xs:attribute name="icon" type="xs:string"/>
+			<xs:attribute name="noprefix" type="xs:string"/>
+			<xs:attribute name="notify" type="xs:string"/>
+			<xs:attribute name="picture" type="xs:string"/>
+			<xs:attribute name="sunken" type="xs:string"/>
+			<xs:attribute name="truncate" type="xs:string"/>
+			<xs:attribute name="wrap" type="xs:string"/>
+			<xs:attribute name="simple" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onEnable" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- TBI <xs:element name="ListView"/> -->
+	<xs:element name="Listbox">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="text" type="xs:string"/>
+						<xs:attribute name="default" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:attribute name="multisel" type="xs:string"/>
+			<xs:attribute name="sort" type="xs:string"/>
+			<xs:attribute name="multicolumn" type="xs:string"/>
+			<xs:attribute name="nointegralheight" type="xs:string"/>
+			<xs:attribute name="noredraw" type="xs:string"/>
+			<xs:attribute name="notify" type="xs:string"/>
+			<xs:attribute name="usetabstop" type="xs:string"/>
+			<xs:attribute name="disablenoscroll" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onSelCancel" type="xs:string"/>
+			<xs:attribute name="onSelChange" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="MakeMenu">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="name" type="xs:string"/>
+						<xs:attribute name="text" type="xs:string"/>
+						<xs:attribute name="checked" type="xs:string"/>
+						<xs:attribute name="onClick" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:attribute name="name" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="WGXMenuNode" mixed="true">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="WGXPre" maxOccurs="unbounded"/>
+			<xs:element name="WGXExec" maxOccurs="unbounded"/>
+			<xs:element name="WGXPost" maxOccurs="unbounded"/>
+			<xs:element name="Item" type="WGXMenuNode" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Button" type="WGXMenuNode" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:choice>
+		<xs:attribute name="name" type="xs:string"/>
+		<xs:attribute name="text" type="xs:string"/>
+		<xs:attribute name="checked" type="xs:string"/>
+		<xs:attribute name="separator" type="xs:string"/>
+		<xs:attribute name="onClick" type="xs:string"/>
+	</xs:complexType>
+	<xs:element name="WGXMenu">
+		<xs:complexType mixed="true">
+			<xs:choice minOccurs="0" maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" type="WGXMenuNode" maxOccurs="unbounded"/>
+				<xs:element name="Button" type="WGXMenuNode" maxOccurs="unbounded"/>
+			</xs:choice>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- TBI <xs:element name="MenuButton"/> -->
+	<!-- TBI <xs:element name="MenuItem"/> -->
+	<xs:element name="MonthCal">
+		<xs:complexType>
+			<xs:attribute name="daystate" type="xs:string"/>
+			<xs:attribute name="multiselect" type="xs:string"/>
+			<xs:attribute name="notoday" type="xs:string"/>
+			<xs:attribute name="notodaycircle" type="xs:string"/>
+			<xs:attribute name="weeknumber" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onDayState" type="xs:string"/>
+			<xs:attribute name="onSelChange" type="xs:string"/>
+			<xs:attribute name="onSelect" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="NotifyIcon">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="icon" type="xs:string"/>
+			<xs:attribute name="id" type="xs:string"/>
+			<xs:attribute name="tip" type="xs:string"/>
+			<xs:attribute name="event" type="xs:string"/>
+			<xs:attribute name="onClick" type="xs:string"/>
+			<xs:attribute name="onDblClick" type="xs:string"/>
+			<xs:attribute name="onMiddleClick" type="xs:string"/>
+			<xs:attribute name="onMiddleDblClick" type="xs:string"/>
+			<xs:attribute name="onMouseEvent" type="xs:string"/>
+			<xs:attribute name="onRightClick" type="xs:string"/>
+			<xs:attribute name="onRightDblClick" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Pen">
+		<xs:complexType>
+			<xs:attribute name="style" type="xs:string"/>
+			<xs:attribute name="width" type="xs:string"/>
+			<xs:attribute name="color" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ProgressBar">
+		<xs:complexType>
+			<xs:attribute name="smooth" type="xs:string"/>
+			<xs:attribute name="vertical" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Rebar">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Band" maxOccurs="unbounded">
+					<xs:complexType mixed="true">
+						<xs:choice maxOccurs="unbounded">
+							<xs:any minOccurs="0" maxOccurs="unbounded"/>
+						</xs:choice>
+						<xs:attribute name="image" type="xs:string"/>
+						<xs:attribute name="index" type="xs:string"/>
+						<xs:attribute name="bitmap" type="xs:string"/>
+						<xs:attribute name="child" type="xs:string"/>
+						<xs:attribute name="foreground" type="xs:string"/>
+						<xs:attribute name="background" type="xs:string"/>
+						<xs:attribute name="width" type="xs:string"/>
+						<xs:attribute name="minwidth" type="xs:string"/>
+						<xs:attribute name="minheight" type="xs:string"/>
+						<xs:attribute name="text" type="xs:string"/>
+						<xs:attribute name="style" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:attribute name="autosize" type="xs:string"/>
+			<xs:attribute name="bandborders" type="xs:string"/>
+			<xs:attribute name="doubleclick" type="xs:string"/>
+			<xs:attribute name="fixedorder" type="xs:string"/>
+			<xs:attribute name="imagelist" type="xs:string"/>
+			<xs:attribute name="nodivider" type="xs:string"/>
+			<xs:attribute name="varheight" type="xs:string"/>
+			<xs:attribute name="vertical" type="xs:string"/>
+			<xs:attribute name="vgripper" type="xs:string"/>
+			<xs:attribute name="tooltip" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onHeightChange" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- TBI <xs:element name="Region"/> -->
+	<xs:element name="RichEdit">
+		<xs:complexType>
+			<xs:attribute name="align" type="xs:string"/>
+			<xs:attribute name="offset" type="xs:string"/>
+			<xs:attribute name="startindent" type="xs:string"/>
+			<xs:attribute name="right" type="xs:string"/>
+			<xs:attribute name="numbering" type="xs:string"/>
+			<xs:attribute name="bullet" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onChange" type="xs:string"/>
+			<xs:attribute name="onMaxText" type="xs:string"/>
+			<xs:attribute name="onScroll" type="xs:string"/>
+			<xs:attribute name="onUpdate" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Slider">
+		<xs:complexType>
+			<xs:attribute name="tooltip" type="xs:string"/>
+			<xs:attribute name="vertical" type="xs:string"/>
+			<xs:attribute name="aligntop" type="xs:string"/>
+			<xs:attribute name="alignleft" type="xs:string"/>
+			<xs:attribute name="noticks" type="xs:string"/>
+			<xs:attribute name="nothumb" type="xs:string"/>
+			<xs:attribute name="selrange" type="xs:string"/>
+			<xs:attribute name="autoticks" type="xs:string"/>
+			<xs:attribute name="both" type="xs:string"/>
+			<xs:attribute name="fixedlength" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Splitter">
+		<xs:complexType>
+			<xs:attribute name="horizontal" type="xs:string"/>
+			<xs:attribute name="min" type="xs:string"/>
+			<xs:attribute name="max" type="xs:string"/>
+			<xs:attribute name="range" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onRelease" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="StatusBar">
+		<xs:complexType>
+			<xs:attribute name="sizegrip" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TabStrip">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" maxOccurs="unbounded">
+					<xs:complexType mixed="true">
+						<xs:choice maxOccurs="unbounded">
+							<xs:any minOccurs="0" maxOccurs="unbounded"/>
+						</xs:choice>
+						<xs:attribute name="name" type="xs:string"/>
+						<xs:attribute name="image" type="xs:string"/>
+						<xs:attribute name="index" type="xs:string"/>
+						<xs:attribute name="text" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:attribute name="alignright" type="xs:string"/>
+			<xs:attribute name="bottom" type="xs:string"/>
+			<xs:attribute name="buttons" type="xs:string"/>
+			<xs:attribute name="hottrack" type="xs:string"/>
+			<xs:attribute name="imagelist" type="xs:string"/>
+			<xs:attribute name="justify" type="xs:string"/>
+			<xs:attribute name="forceiconleft" type="xs:string"/>
+			<xs:attribute name="forcelabelleft" type="xs:string"/>
+			<xs:attribute name="fixedwidth" type="xs:string"/>
+			<xs:attribute name="focusbottondown" type="xs:string"/>
+			<xs:attribute name="focusnever" type="xs:string"/>
+			<xs:attribute name="flat" type="xs:string"/>
+			<xs:attribute name="flatseparator" type="xs:string"/>
+			<xs:attribute name="raggedright" type="xs:string"/>
+			<xs:attribute name="multiline" type="xs:string"/>
+			<xs:attribute name="multiselect" type="xs:string"/>
+			<xs:attribute name="vertical" type="xs:string"/>
+			<xs:attribute name="tooltip" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onChange" type="xs:string"/>
+			<xs:attribute name="onChanging" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Textfield">
+		<xs:complexType>
+			<xs:attribute name="align" type="xs:string"/>
+			<xs:attribute name="keepselection" type="xs:string"/>
+			<xs:attribute name="multiline" type="xs:string"/>
+			<xs:attribute name="password" type="xs:string"/>
+			<xs:attribute name="lowercase" type="xs:string"/>
+			<xs:attribute name="uppercase" type="xs:string"/>
+			<xs:attribute name="autohscroll" type="xs:string"/>
+			<xs:attribute name="autovscroll" type="xs:string"/>
+			<xs:attribute name="number" type="xs:string"/>
+			<xs:attribute name="prompt" type="xs:string"/>
+			<xs:attribute name="readonly" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onChange" type="xs:string"/>
+			<xs:attribute name="onMaxText" type="xs:string"/>
+			<xs:attribute name="onScroll" type="xs:string"/>
+			<xs:attribute name="onUpdate" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Timer">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="elapse" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Toolbar">
+		<xs:complexType>
+			<xs:attribute name="adjustable" type="xs:string"/>
+			<xs:attribute name="altdrag" type="xs:string"/>
+			<xs:attribute name="flat" type="xs:string"/>
+			<xs:attribute name="list" type="xs:string"/>
+			<xs:attribute name="transparent" type="xs:string"/>
+			<xs:attribute name="imagelist" type="xs:string"/>
+			<xs:attribute name="multiline" type="xs:string"/>
+			<xs:attribute name="nodivider" type="xs:string"/>
+			<xs:attribute name="tooltip" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onButtonClick" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Tooltip">
+		<xs:complexType>
+			<xs:attribute name="alwaystip" type="xs:string"/>
+			<xs:attribute name="noprefix" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onNeedText" type="xs:string"/>
+			<xs:attribute name="onPop" type="xs:string"/>
+			<xs:attribute name="onShow" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- TBI <xs:element name="Trackbar"/> -->
+	<xs:complexType name="TreeViewNode" mixed="true">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="WGXPre" maxOccurs="unbounded"/>
+			<xs:element name="WGXExec" maxOccurs="unbounded"/>
+			<xs:element name="WGXPost" maxOccurs="unbounded"/>
+			<xs:element name="Item" type="TreeViewNode" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:choice>
+		<xs:attribute name="name" type="xs:string"/>
+		<xs:attribute name="bold" type="xs:string"/>
+		<xs:attribute name="image" type="xs:string"/>
+		<xs:attribute name="item" type="xs:string"/>
+		<xs:attribute name="selected" type="xs:string"/>
+		<xs:attribute name="selectedimage" type="xs:string"/>
+		<xs:attribute name="text" type="xs:string"/>
+	</xs:complexType>
+	<xs:element name="TreeView">
+		<xs:complexType mixed="true">
+			<xs:choice minOccurs="0" maxOccurs="unbounded">
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" type="TreeViewNode" maxOccurs="unbounded"/>
+			</xs:choice>
+			<xs:attribute name="imagelist" type="xs:string"/>
+			<xs:attribute name="tooltip" type="xs:string"/>
+			<xs:attribute name="lines" type="xs:string"/>
+			<xs:attribute name="rootlines" type="xs:string"/>
+			<xs:attribute name="buttons" type="xs:string"/>
+			<xs:attribute name="showselalways" type="xs:string"/>
+			<xs:attribute name="checkboxes" type="xs:string"/>
+			<xs:attribute name="trackselect" type="xs:string"/>
+			<xs:attribute name="disabledragdrop" type="xs:string"/>
+			<xs:attribute name="editlabels" type="xs:string"/>
+			<xs:attribute name="fullrowselect" type="xs:string"/>
+			<xs:attribute name="nonevenheight" type="xs:string"/>
+			<xs:attribute name="noscroll" type="xs:string"/>
+			<xs:attribute name="notooltips" type="xs:string"/>
+			<xs:attribute name="rtlreading" type="xs:string"/>
+			<xs:attribute name="singleexpand" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onBeginLabelEdit" type="xs:string"/>
+			<xs:attribute name="onCollapse" type="xs:string"/>
+			<xs:attribute name="onCollapsing" type="xs:string"/>
+			<xs:attribute name="onEndLabelEdit" type="xs:string"/>
+			<xs:attribute name="onExpand" type="xs:string"/>
+			<xs:attribute name="onExpanding" type="xs:string"/>
+			<xs:attribute name="onNodeClick" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="UpDown">
+		<xs:complexType>
+			<xs:attribute name="align" type="xs:string"/>
+			<xs:attribute name="nothousands" type="xs:string"/>
+			<xs:attribute name="wrap" type="xs:string"/>
+			<xs:attribute name="horizontal" type="xs:string"/>
+			<xs:attribute name="autobuddy" type="xs:string"/>
+			<xs:attribute name="setbuddy" type="xs:string"/>
+			<xs:attribute name="arrowkeys" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+			<xs:attribute name="onScroll" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="WGXSplitter">
+		<xs:complexType>
+			<xs:choice>
+				<xs:element name="WGXPre" maxOccurs="unbounded"/>
+				<xs:element name="WGXExec" maxOccurs="unbounded"/>
+				<xs:element name="WGXPost" maxOccurs="unbounded"/>
+				<xs:element name="Item" minOccurs="2" maxOccurs="2">
+					<xs:complexType mixed="true">
+						<xs:choice maxOccurs="unbounded">
+							<xs:any minOccurs="0" maxOccurs="unbounded"/>
+						</xs:choice>
+						<xs:attributeGroup ref="StandardAttributes"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+			<xs:attribute name="horizontal" type="xs:string"/>
+			<xs:attribute name="min" type="xs:string"/>
+			<xs:attribute name="max" type="xs:string"/>
+			<xs:attribute name="range" type="xs:string"/>
+			<xs:attribute name="start" type="xs:string"/>
+			<xs:attribute name="splittersize" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="WGXPre" type="xs:string"/>
+	<xs:element name="WGXExec" type="xs:string"/>
+	<xs:element name="WGXPost" type="xs:string"/>
+	<xs:element name="AxWindow">
+		<xs:complexType>
+			<xs:attribute name="control" type="xs:string"/>
+			<xs:attribute name="hscroll" type="xs:string"/>
+			<xs:attribute name="vscroll" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Scintilla">
+		<xs:complexType>
+			<xs:attribute name="readonly" type="xs:string"/>
+			<xs:attribute name="hscroll" type="xs:string"/>
+			<xs:attribute name="vscroll" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Grid">
+		<xs:complexType>
+			<xs:attribute name="enable" type="xs:string"/>
+			<xs:attribute name="hscroll" type="xs:string"/>
+			<xs:attribute name="vscroll" type="xs:string"/>
+			<xs:attribute name="rows" type="xs:string"/>
+			<xs:attribute name="columns" type="xs:string"/>
+			<xs:attribute name="fixedrows" type="xs:string"/>
+			<xs:attribute name="fixedcolumns" type="xs:string"/>
+			<xs:attribute name="editable" type="xs:string"/>
+			<xs:attribute name="doublebuffer" type="xs:string"/>
+			<xs:attributeGroup ref="StandardAttributes"/>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

@@ -1,0 +1,151 @@
+<?xml version="1.0"?>
+<GUI
+xmlns="http://www.numeninest.com/Perl/WGX"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.numeninest.com/Perl/WGX http://www.numeninest.com/Perl/WGX/win32-gui-xmlbuilder.xsd">
+	<WGXPre><![CDATA[
+		use Win32::TieRegistry(Delimiter=>"|", ArrayValues=>0);
+		our ($private, $public) = &initRegistry();
+		
+		sub initRegistry {
+			my $root = $Registry->{"CUser|Software|BlairSutton|Application Template"};
+			if ($root eq '') {
+				print STDERR "no BlairSutton|Application Template registry, creating...\n";
+				$Registry->{"CUser|Software|"} = {
+					"BlairSutton|" => {
+						"Application Template|" => {
+							"Private|" => {
+								"|top"    => "0",
+								"|left"   => "0",
+								"|width"  => "200",
+								"|height" => "200",
+								"|show" => "1",
+								"|exitprompt" => "1",
+							},
+							"Public|" => {
+								"Page1|" => {
+									"|value1" => "apples",
+									"|value2" => "bananas",
+								},
+								"|Page2" => "0",
+							}
+						}
+					}
+				};
+			}
+			return (
+				$Registry->{"CUser|Software|BlairSutton|Application Template|Private"},
+				$Registry->{"CUser|Software|BlairSutton|Application Template|Public"}
+			);
+		}
+		
+		sub hashwalk {
+			my ($T, $node, $HR, $n) = @_;
+			$n == 0 ? return : $n--;
+			foreach my $k (keys %$HR) {
+				my $newnode = $T->InsertItem(-parent => $node, -text=>$k);
+				&hashwalk($T, $newnode, $$HR{$k}, $n) if ref($$HR{$k}) ne  '';
+				Win32::GUI::DoEvents();
+			}
+		}
+		
+		sub Exit {
+			if (! $_[0]->IsZoomed && ! $_[0]->IsIconic) {
+				$private->{width}  = $_[0]->Width;
+				$private->{height} = $_[0]->Height;
+				$private->{left}   = $_[0]->Left;
+				$private->{top}    = $_[0]->Top;
+				$private->{show}   = 1;
+			} elsif ($_[0]->IsZoomed) {
+				$private->{show} = 3;
+			} elsif ($_[0]->IsIconic) {
+				$private->{show} = 6;
+			}
+			$private->{exitprompt}  = $self->{ExitPrompt}->Checked;
+			my $return;
+			if ($self->{ExitPrompt}->Checked) {
+				$return = Win32::GUI::MessageBox(
+					$_[0],
+					"Exit confirmation",
+					"Are you sure?",
+					MB_OKCANCEL|MB_ICONQUESTION
+				);
+			} else {
+				$return = 1;
+			}
+			if ($return == 1) {
+				$_[0]->PostQuitMessage(0);
+				return -1;
+			}
+		}
+		
+	]]></WGXPre>
+	<Class name='C' icon='exec:$Win32::GUI::XMLBuilder::ICON'/>
+	<WGXMenu name="M">
+		<Button name='File' text='&amp;File'>
+			<Button text='New'>
+				<Item text='Type One Document'/>
+				<Item text='Type Two Document'/>
+			</Button>
+			<Item separator='1'/>
+			<Item text='Open...'/>
+			<Item separator='1'/>
+			<Item text='Close'/>
+			<Item separator='1'/>
+			<Item text='Save'/>
+			<Item text='Save As..'/>
+			<Item separator='1'/>
+			<Item name='ExitPrompt' 
+				text='Prompt on Exit'
+				checked='exec:$private->{exitprompt}'
+				onClick='sub { $self->{ExitPrompt}->Checked(not $self->{ExitPrompt}->Checked); }'
+			/>
+			<Item text='Exit' onClick='sub { Exit($_[0]) }'/>
+		</Button>
+		<Button name='Tools' text='&amp;Tools'>
+			<Item separator='1'/>
+			<Item text='Options...' onClick='sub { $self->{Main}->Disable; $self->{Options}->Show; $self->{Options}->Center;}'/>
+		</Button>
+		<Button name='Help' text='&amp;Help'>
+			<Item text='Contents'/>
+			<Item separator='1'/>
+			<Item text='About' onClick='sub {
+				Win32::GUI::MessageBox(
+					$_[0],
+					"Application Template by Blair Sutton 2004",
+					"About Application Template",
+					MB_OK|MB_ICONASTERISK
+				);
+			}'/>
+		</Button>
+	</WGXMenu>
+	<Window
+		name="Main"
+		dim='exec:$private->{left}, exec:$private->{top}, exec:$private->{width}, exec:$private->{height}'
+		show='exec:$private->{show}'
+		title='Application Template'
+		class='$self->{C}'
+		menu="$self->{M}"
+		onTerminate='sub { Exit($_[0]) }'
+	>
+		<StatusBar name='S'
+			top='%P%->ScaleHeight - $self->{S}->Height if defined $self->{S}'
+			height='exec:$self->{S}->Height if defined $self->{S}'
+			text='exec:$Win32::GUI::XMLBuilder::AUTHOR'
+		/>
+		<Window name='Options'
+			dim='350, 100, 200, 200'
+			title='Options'
+			show='0'
+			onTerminate='sub { $self->{Options}->Hide; $self->{Main}->Enable; $self->{Main}->BringWindowToTop; return 0; }'
+		>
+			<TreeView name='T'
+				lines='1' rootlines='1' buttons='1' visible='1'
+			/>
+		</Window>
+	</Window>
+	<WGXPost><![CDATA[
+		hashwalk($self->{T}, 0, $public, 2)
+	]]></WGXPost>
+</GUI>
+

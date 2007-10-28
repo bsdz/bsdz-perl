@@ -1,0 +1,852 @@
+<?xml version="1.0"?>
+<!-- 
+TODO
+*) remove podview pages from IE history
+*) copy, paste, select all
+*) save, save as, editing
+*) graphics for back, forward, home
+*) registry to form for options
+-->
+<GUI
+xmlns="http://www.numeninest.com/Perl/WGX"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.numeninest.com/Perl/WGX ../../win32-gui-xmlbuilder.xsd">
+	<WGXPre><![CDATA[
+		use Win32::OLE;
+		use Win32::GUI::Constants ();
+		use Win32::GUI::AxWindow;
+		use Win32::GUI::Scintilla;
+		use File::Find;
+		use File::Copy;
+		use File::Basename;
+		use Pod::Functions;
+		use Pod::Tree::HTML;
+		use Pod::Find qw(pod_where);
+		use Cwd;
+		use Win32::TieRegistry(Delimiter=>"|", ArrayValues=>0);
+		Win32::SetChildShowWindow(0);
+		
+		our $registry = &initReg;
+		our $currentFile = '';
+		our @tmpFiles;
+		our $htmlCacheDir = $ENV{TEMP};
+		our $cssFile = "$htmlCacheDir/podview.css";
+		our @OURINC = map { $_ eq '.' ? getcwd : $_ } @INC;
+		#push @OURINC, 'another dir 1', 'another dir 2';
+		
+		sub initReg {
+			my $registry = $Registry->{"CUser|Software|BlairSutton|PODView|"};
+			if ($registry eq '') {
+				print STDERR "no BlairSutton|PODView registry, creating...\n";
+				$Registry->{"CUser|Software|"} = {
+					"BlairSutton|" => {
+						"PODView|" => {
+							"|top"    => "100",
+							"|left"   => "100",
+							"|width"  => "800",
+							"|height" => "600",
+							"|MainSplitterStart" => "180",
+							"|LeftSplitterStart" => "200",
+							"|show" => "1",
+							"|perl" => "c:/niperl/bin/perl.exe",
+							"favorites|" => { },
+							"history|" => { },
+							"editor|" => {
+								"StyleSetSpec|" => {
+									"|STYLE_DEFAULT"       => "face:Lucida Console,size:10",
+									"|STYLE_LINENUMBER"    => "back:#C0C0C0,face:Lucida Console",
+									"|STYLE_CONTROLCHAR"   => "face:Lucida Console",
+									"|STYLE_BRACELIGHT"    => "fore:#FFFFFF,back:#0000FF,bold",
+									"|STYLE_BRACEBAD"      => "fore:#000000,back:#FF0000,bold",
+									"|SCE_PL_DEFAULT"      => "fore:#808080,face:Lucida Console",
+									"|SCE_PL_ERROR"        => "fore:#0000FF",
+									"|SCE_PL_COMMENTLINE"  => "fore:#007F00",
+									"|SCE_PL_POD"          => "fore:#004000,back:#E0FFE0,eolfilled",
+									"|SCE_PL_NUMBER"       => "fore:#007F7F",
+									"|SCE_PL_WORD"         => "fore:#00007F,bold",
+									"|SCE_PL_STRING"       => "fore:#7F007F,face:Lucida Console,italic",
+									"|SCE_PL_CHARACTER"    => "fore:#7F0000,face:Lucida Console,italic",
+									"|SCE_PL_PUNCTUATION"  => "fore:#00007F,bold",
+									"|SCE_PL_PREPROCESSOR" => "fore:#00007F,bold",
+									"|SCE_PL_OPERATOR"     => "bold",
+									"|SCE_PL_IDENTIFIER"   => "fore:#000000",
+									"|SCE_PL_SCALAR"       => "fore:#000000,back:#FFE0E0",
+									"|SCE_PL_ARRAY"        => "fore:#000000,back:#FFFFE0",
+									"|SCE_PL_HASH"         => "fore:#000000,back:#FFE0FF",
+									"|SCE_PL_SYMBOLTABLE"  => "fore:#000000,back:#E0E0E0",
+									"|SCE_PL_REGEX"        => "fore:#000000,back:#A0FFA0",
+									"|SCE_PL_REGSUBST"     => "fore:#000000,back:#F0E080",
+									"|SCE_PL_LONGQUOTE"    => "fore:#FFFF00,back:#8080A0",
+									"|SCE_PL_BACKTICKS"    => "fore:#FFFF00,back:#A08080",
+									"|SCE_PL_DATASECTION"  => "fore:#600000,back:#FFF0D8,eolfilled",
+									"|SCE_PL_HERE_DELIM"   => "fore:#000000,back:#DDD0DD",
+									"|SCE_PL_HERE_Q"       => "fore:#7F007F,back:#DDD0DD,eolfilled,notbold",
+									"|SCE_PL_HERE_QQ"      => "fore:#7F007F,back:#DDD0DD,eolfilled,bold",
+									"|SCE_PL_HERE_QX"      => "fore:#7F007F,back:#DDD0DD,eolfilled,italics",
+									"|SCE_PL_STRING_Q"     => "fore:#7F007F,notbold,face:Lucida Console",
+									"|SCE_PL_STRING_QQ"    => "fore:#7F007F,italic",
+									"|SCE_PL_STRING_QX"    => "fore:#FFFF00,back:#A08080",
+									"|SCE_PL_STRING_QR"    => "fore:#000000,back:#A0FFA0",
+									"|SCE_PL_STRING_QW"    => "fore:#000000,back:#FFFFE0",
+								},
+								"Markers|" => {
+									"|SC_MARKNUM_FOLDEREND"       => "SC_MARK_BOXPLUSCONNECTED,#FFFFFF,#000000",
+									"|SC_MARKNUM_FOLDEROPENMID"       => "SC_MARK_BOXMINUSCONNECTED,#FFFFFF,#000000",
+									"|SC_MARKNUM_FOLDERMIDTAIL"       => "SC_MARK_TCORNER,#FFFFFF,#000000",
+									"|SC_MARKNUM_FOLDERTAIL"       => "SC_MARK_LCORNER,#FFFFFF,#000000",
+									"|SC_MARKNUM_FOLDERSUB"       => "SC_MARK_VLINE,#FFFFFF,#000000",
+									"|SC_MARKNUM_FOLDER"       => "SC_MARK_BOXPLUS,#FFFFFF,#000000",
+									"|SC_MARKNUM_FOLDEROPEN"       => "SC_MARK_BOXMINUS,#FFFFFF,#000000",
+								},
+							},
+							"browser|" => {
+								"CSS|" => {
+									"|a, p, td, th, body, caption, li, h1, h2" => "font-family: 'Verdana', sans-serif; color: black;",
+									"|a, p, td, th, body, caption, li" => "font-size: 11px;",
+									"|p, li" => "text-align: justify;",
+									"|body" => "background-color: white;",
+									"|h1, h1 a" => "font-size: 16px;text-decoration: underline;",
+									"|h2, h2 a" => "font-size: 14px;",
+									"|pre" => "font-family: 'Lucida Console', sans-serif;font-size: 10px;background: #eeeeee;border: 1px solid #888888;padding: 1em;white-space: pre;",
+									"|a" => "text-decoration:none;color: #111111;",
+									"|a:hover" => "text-decoration:underline;color: #111111;",
+								}
+							}
+						}
+					}
+				};
+				$registry = $Registry->{"CUser|Software|BlairSutton|PODView|"};
+			}
+			return $registry;
+		}
+		
+		sub Exit {
+			if (! $self->{W}->IsZoomed && ! $self->{W}->IsIconic) {
+				$registry->{width}  = $self->{W}->ScaleWidth;
+				$registry->{height} = $self->{W}->ScaleHeight;
+				$registry->{left}   = $self->{W}->Left;
+				$registry->{top}    = $self->{W}->Top;
+				$registry->{MainSplitterStart}    = $self->{MainSplitter}->Left;
+				$registry->{LeftSplitterStart}    = $self->{LeftSplitter}->Top;
+				$registry->{show}   = 1;
+			} elsif ($self->{W}->IsZoomed) {
+				$registry->{show} = 3;
+			} elsif ($self->{W}->IsIconic) {
+				$registry->{show} = 6;
+			}
+			$registry->{exitprompt}  = $self->{ExitPrompt}->Checked;
+			my $return;
+			if ($self->{ExitPrompt}->Checked) {
+				$return = Win32::GUI::MessageBox(
+					$self->{W},
+					"Exit confirmation",
+					"Are you sure?",
+					0x0001|0x0020 
+				);
+			} else {
+				$return = 1;
+			}
+			if ($return == 1) {
+				$self->{CODE}->DESTROY;
+				$self->{W}->PostQuitMessage(0);
+				return -1;
+			}
+		}
+
+our $CLOSE_BMP = new Win32::GUI::BitmapInline( q(
+Qk02AwAAAAAAADYAAAAoAAAAEAAAABAAAAABABgAAAAAAAADAACcCgAAnAoAAAAAAAAAAAAA////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////
+////////////////AAAAAP//AP//AP//AP//AP//AP//AP//AP//AP//AAAA////////////////
+////AAAAAP//AP//AP//AP//AP//AP//AP//AP//AP//AAAA////////////////////AAAAAP//
+AP//AP//AP//AP//AP//AP//AP//AP//AAAA////////////////////AAAAAP//AP//AP//AP//
+AP//AP//AP//AP//AP//AAAA////////////////////AAAAAP//AP//AP//AP//AP//AP//AP//
+AP//AP//AAAA////////////////////AAAAAP//AP//AP//AP//AP//AP//AP//AP//AP//AAAA
+////////////////////GhoaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFBQU////////////
+////////////np6eAQEBAAAAAAAAampq////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////
+) );
+our $OPEN_BMP = new Win32::GUI::BitmapInline( q(
+Qk02AwAAAAAAADYAAAAoAAAAEAAAABAAAAABABgAAAAAAAADAACcCgAAnAoAAAAAAAAAAAAA////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAvLy8
+////////////////AAAAp6enAP//AP//AP//AP//AP//AP//AP//AP//w8PDQkJC////////////
+////AAAArKysysrKAP//AP//AP//AP//AP//AP//AP//AP//urq6t7e3////////////AAAAAP//
+VVVVAP//AP//AP//AP//AP//AP//AP//AP//AP//3d3d/Pz8////////AAAAAP//r6+vaGhoAP//
+AP//AP//AP//AP//AP//AP//AP//AP//tra2////////AAAAAP//AP//Pj4+AAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAKysr////////AAAAAP//AP//AP//AP//AP//AP//AP//AP//AP//AAAA
+////////////////////GhoaAAAAqqqqAP//AP//YGBgAAAAAAAAAAAAAAAAHx8f////////////
+////////////np6eAQEBAAAAAAAAaGho////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////
+) );
+our $POD_BMP = new Win32::GUI::BitmapInline( q(
+Qk02AwAAAAAAADYAAAAoAAAAEAAAABAAAAABABgAAAAAAAADAADDCgAAwwoAAAAAAAAAAAAA////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////FhYWYGBgeHh4oaGhz8/P3NzcJCQk1dXV0NDQoaGheHh4YGBg
+FhYW////////////AAAAbm5uuLi4pqamh4eHampqJCQkbW1thoaGpqamurq6bm5uAAAA////////
+////AAAAAAAAaGho5eXl+/v739/fGhoaq6ur+fn57OzsfX19AAAAAAAA////////////AAAAAAAA
+AAAAdnZ2DQ0NjY2NAAAAgYGBCgoKcHBwAAAAAAAAAAAA////////////AAAAAAAAAAAA////////
+////AAAA////////////AAAAAAAAAAAA////////////AAAAAAAAAAAA////////////AAAA////
+////////AAAAAAAAAAAA////////////AAAAAAAAAAAA////////////AAAA////////////AAAA
+AAAAAAAA////////////AAAAGhoaAAAA////////+/v7AAAA/Pz8////////AAAAKSkpAAAA////
+////////////////AQEB0tLS+fn5oKCgQ0NDo6Oj+Pj41NTUAQEB8/Pz+/v7////////////////
+////tra2Li4uCQkJVFRU9fX1WFhYCgoKLS0tt7e3////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////
+) );
+our $PM_BMP = new Win32::GUI::BitmapInline( q(
+Qk02AwAAAAAAADYAAAAoAAAAEAAAABAAAAABABgAAAAAAAADAADDCgAAwwoAAAAAAAAAAAAA////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAA////////////
+////////////////////////////////AAAA9JsAAAAA+Q2BAAAA////////////////////////
+////////////////////AAAAAAAAAAAA+Q2BAAAA////////////////////////////////////
+////////AAAA+Q2B+Q2B+Q2BAAAA////////////////////////////////////////////AAAA
+AAAAAAAAAAAAAAAA////////////////////////////////////////////AAAA9JsA9JsA9JsA
+AAAA////////////////////////////////////////////AAAAAAAAAAAA9JsAAAAA////////
+////////////////////////////////////AAAA9JsA9JsA9JsAAAAA////////////////////
+////////////////////////AAAAAAAAAAAAAAAAAAAA////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////
+) );
+our $PL_BMP = new Win32::GUI::BitmapInline( q(
+Qk02AwAAAAAAADYAAAAoAAAAEAAAABAAAAABABgAAAAAAAADAADDCgAAwwoAAAAAAAAAAAAA////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////
+////////////////////////AAAA9JsA9JsA9JsA9JsA9JsA9JsA9JsAAAAA////////////////
+////////////AAAA9JsA9JsA9JsA9JsA9JsA9JsA9JsAAAAA////////////////////////////
+AAAA9JsA9JsA9JsA9JsA9JsA9JsA9JsAAAAA////////////////////////////AAAA9JsA9JsA
+9JsA9JsA9JsA9JsA9JsAAAAA////////////////////////////AAAA9JsA9JsA9JsA9JsA9JsA
+9JsA9JsAAAAA////////////////////////////AAAA9JsA9JsA9JsA9JsA9JsA9JsA9JsAAAAA
+////////////////////////////AAAA9JsA9JsA9JsA9JsA9JsA9JsA9JsAAAAA////////////
+////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////
+) );
+		
+	]]></WGXPre>
+	<WGXMenu>
+		<Button name='M0'>
+			<Item text='Open...'
+				onClick='sub{
+					my $file = Win32::GUI::GetOpenFileName(
+						-owner => $_[0],
+						-title    => "Open a Perl file",
+						-filter => [
+							"Module (*.pm)" => "*.pm",
+							"POD (*.pod)" => "*.pod",
+							"Script (*.pl)" =>"*.pl",
+							"All files" => "*.*",
+						],
+					);
+					if (-f $file) {
+						$currentFile = $file;
+						loadfile();
+					}
+				}'
+			/>
+			<!--
+			<Item text='Save'
+				onClick='sub{
+					if (-f $currentFile) {
+						$self->{CODE}->SaveFile($currentFile);
+						loadfile();
+					}
+				}'
+			/>
+			<Item text='Save As...'/>
+			<Item text='New'/>
+			-->
+			<Item seperator='1'/>
+			<Item name='ExitPrompt' 
+				text='Prompt on Exit'
+				checked='exec:$registry->{exitprompt}'
+				onClick='sub { $self->{ExitPrompt}->Checked(not $self->{ExitPrompt}->Checked); }'
+			/>
+			<Item text='Exit' onClick='sub { Exit($_[0]) }'/>	
+		</Button>
+		<Button name='M1'>
+			<Item text='Cut'/>
+			<Item text='Copy'/>
+			<Item text='Paste'/>
+			<Item seperator='1'/>
+			<Item text='Select All'/>
+		</Button>
+		<Button name='M2'>
+			<Item text='View Source' onClick='sub {$self->{POD}->Hide; $self->{Source}->Show; $self->{View}->Select(1);}'/>
+			<Item text='View POD' onClick='sub {$self->{Source}->Hide; $self->{POD}->Show; $self->{View}->Select(0);}'/>
+			<Item seperator='1'/>
+			<Item text='Refresh POD' onClick='loadfile'/>
+			<Item seperator='1'/>
+			<Item text='Add to Favorites' onClick='sub {addToTree("FavoritesTree", "favorites");}'/>
+		</Button>
+		<Button name='M3'>
+			<Item text='Contents'/>
+			<Item separator='1'/>
+			<Item text='About' onClick='sub {
+				Win32::GUI::MessageBox(
+					$_[0],
+					"PODView by Blair Sutton 2004",
+					"About PODView",
+					MB_OK|MB_ICONASTERISK
+				);
+			}'/>
+		</Button>
+	</WGXMenu>	
+	<ImageList name='IL' width='16' height='16' >
+		<Item bitmap='exec:$CLOSE_BMP'/>
+		<Item bitmap='exec:$OPEN_BMP'/>
+		<Item bitmap='exec:$POD_BMP'/>
+		<Item bitmap='exec:$PM_BMP'/>
+		<Item bitmap='exec:$PL_BMP'/>
+	</ImageList>
+	<WGXPre><![CDATA[
+		sub fileImage {
+			my $file = shift;
+			if (-d $file) {	return 0	}
+			elsif ($file =~ /(?:pl)$/) { return 4 } 
+			elsif ($file =~ /(?:pm)$/) { return 3 } 
+			elsif ($file =~ /(?:pod)$/) { return 2 } 
+			else { return undef }
+		}
+	]]></WGXPre>
+	<Class name='C' icon='exec:$Win32::GUI::XMLBuilder::ICON'/>
+	<Window name='W'
+		dim='exec:$registry->{left}, exec:$registry->{top}, exec:$registry->{width}, exec:$registry->{height}'
+		show='exec:$registry->{show}'
+		title='POD Viewer'
+		class='$self->{C}'
+		onTerminate='sub { Exit($_[0]) }'
+		onTimer='loadtree'
+	>
+		<Timer name='LoadTimer' elapse='1000'/>
+		<WGXPanel
+			dim='0, %P%->ScaleHeight - 20, %P%->ScaleWidth, 20'
+		>
+			<Label name='SText'
+				dim='0, 4, %P%->ScaleWidth-200, %P%->ScaleHeight - 6'
+				text='exec:$Win32::GUI::XMLBuilder::AUTHOR'
+			/>
+			<ProgressBar name='P'
+				dim='%P%->ScaleWidth-200, 4, 200, %P%->ScaleHeight - 6'
+				width='100'
+				smooth='1'
+			/>
+		</WGXPanel>
+		<Rebar top='0' bandborders='1' pushstyle='exec:Win32::GUI::Constants::RBS_BANDBORDERS()'>
+			<Band minheight='24' minwidth='200' width='200' style='exec:Win32::GUI::Constants::RBBS_GRIPPERALWAYS()'>
+				<Toolbar height='30' name='TB' onButtonClick='sub {
+						%P%->TrackPopupMenu($self->{"M$_[1]"}, $_[0]->AbsLeft + ($_[0]->GetRect($_[1]))[0], $_[0]->AbsTop + ($_[0]->GetRect($_[1]))[3]); 
+					}'
+				/>
+				<WGXExec><![CDATA[
+					$self->{TB}->SetBitmapSize(0, 0);
+					$self->{TB}->Padding(10, 8);
+					$self->{TB}->AddString("File");
+					$self->{TB}->AddString("Edit");
+					$self->{TB}->AddString("Tools");
+					$self->{TB}->AddString("Help");
+					$self->{TB}->SetStyle(
+						Win32::GUI::Constants::TBSTYLE_LIST()|
+						Win32::GUI::Constants::TBSTYLE_FLAT()|
+						Win32::GUI::Constants::TBSTYLE_TRANSPARENT()|
+						Win32::GUI::Constants::CCS_NODIVIDER()
+					);
+					my $options = Win32::GUI::Constants::BTNS_SHOWTEXT()|Win32::GUI::Constants::BTNS_AUTOSIZE();
+					$self->{TB}->AddButtons(4,
+						I_IMAGENONE, 0, Win32::GUI::Constants::TBSTATE_ENABLED(), $options, 0,
+						I_IMAGENONE, 1, Win32::GUI::Constants::TBSTATE_ENABLED(), $options, 1,
+						I_IMAGENONE, 2, Win32::GUI::Constants::TBSTATE_ENABLED(), $options, 2,
+						I_IMAGENONE, 3, Win32::GUI::Constants::TBSTATE_ENABLED(), $options, 3,
+					);
+				]]></WGXExec>
+			</Band>
+			<Band minheight='24' minwidth='200' width='200' style='exec:Win32::GUI::Constants::RBBS_GRIPPERALWAYS()'>
+				<Toolbar name='NavTB' onButtonClick='sub {
+					if ($_[1] == 0) {
+						$ie->GoBack();
+					} elsif ($_[1] == 1) {
+						$ie->GoForward();
+					} elsif ($_[1] == 2 &amp;&amp; -f "$htmlCacheDir/podview_welcome.html") {
+						$ie->Navigate2("file://$htmlCacheDir/podview_welcome.html");
+					}
+				}'/>
+				<WGXExec><![CDATA[
+					$self->{NavTB}->SetBitmapSize(0, 0);
+					$self->{NavTB}->Padding(10, 8);
+					$self->{NavTB}->AddString("Back");
+					$self->{NavTB}->AddString("Forwards");
+					$self->{NavTB}->AddString("Home");
+					$self->{NavTB}->SetStyle(
+						Win32::GUI::Constants::TBSTYLE_LIST()|
+						Win32::GUI::Constants::TBSTYLE_FLAT()|
+						Win32::GUI::Constants::TBSTYLE_TRANSPARENT()|
+						Win32::GUI::Constants::CCS_NODIVIDER()
+					);
+					my $options = Win32::GUI::Constants::BTNS_SHOWTEXT()|Win32::GUI::Constants::BTNS_AUTOSIZE();
+					$self->{NavTB}->AddButtons(3,
+						I_IMAGENONE, 0, Win32::GUI::Constants::TBSTATE_ENABLED(), $options, 0,
+						I_IMAGENONE, 1, Win32::GUI::Constants::TBSTATE_ENABLED(), $options, 1,
+						I_IMAGENONE, 2, Win32::GUI::Constants::TBSTATE_ENABLED(), $options, 2,
+					);
+				]]></WGXExec>
+			</Band>
+		</Rebar>
+		<WGXSplitter name='MainSplitter'
+			dim='0, 30, $self->{W}->ScaleWidth, $self->{W}->ScaleHeight - 20 - 30'
+			horizontal='0'
+			splittersize='4'
+			start='exec:$registry->{MainSplitterStart}'
+			range='0, 500'
+		>
+			<Item name='LeftPane'>
+				<WGXSplitter name='LeftSplitter'
+					dim='0, 5, $self->{LeftPane}->ScaleWidth, $self->{LeftPane}->ScaleHeight - 5'
+					horizontal='1'
+					splittersize='4'
+					start='exec:$registry->{LeftSplitterStart}'
+					range='0, 500'
+				>
+					<Item name='TopPane'>
+						<TabStrip>
+							<Item text='Files'>
+								<TreeView name='PODFileTree'
+									lines='1' rootlines='1' buttons='1' visible='1'
+									imagelist='$self->{IL}'
+									onNodeClick='PODSelect'
+									onRightClick='PODProps'
+								/>
+							</Item>
+							<Item text='Favorites'>
+								<TreeView name='FavoritesTree'
+									lines='1' rootlines='1' buttons='1' visible='1'
+									imagelist='$self->{IL}'
+									onNodeClick='PODSelect'
+									onRightClick='PODProps'
+								>
+									<WGXPost><![CDATA[
+										foreach my $file (keys %{$registry->{favorites}}) {
+											$file =~ s/^(\|)//;
+											$self->{FavoritesTree}->InsertItem(-image => &fileImage($file), -text => $file);
+										}
+									]]></WGXPost>
+								</TreeView>
+							</Item>
+							<Item text='History'>
+								<TreeView name='HistoryTree'
+									lines='1' rootlines='1' buttons='1' visible='1'
+									imagelist='$self->{IL}'
+									onNodeClick='PODSelect'
+									onRightClick='PODProps'
+								>
+									<WGXPost><![CDATA[
+										foreach my $file (keys %{$registry->{history}}) {
+											$file =~ s/^(\|)//;
+											$self->{HistoryTree}->InsertItem(-image => &fileImage($file), -text => $file);
+										}
+									]]></WGXPost>
+								</TreeView>
+							</Item>
+						</TabStrip>
+					</Item>
+					<Item name='BottomPane'>
+						<TabStrip>
+							<Item text='Functions'>
+								<TreeView name='FunctionTree'
+									lines='1' rootlines='1' buttons='1' visible='1'
+									imagelist='$self->{IL}'
+									onNodeClick='FunctionSelect'
+								/>
+							</Item>
+							<Item text='Variables'>
+								<TreeView name='VariableTree'
+									lines='1' rootlines='1' buttons='1' visible='1'
+									imagelist='$self->{IL}'
+									onNodeClick='VariableSelect'
+								/>
+							</Item>
+						</TabStrip>
+					</Item>
+				</WGXSplitter>
+			</Item>
+			<Item name='RightPane'>	
+				<TabStrip name='View' imagelist='$self->{IL}'>
+					<Item text='POD' name='POD' image='2'>
+						<AxWindow name='IE' control='Shell.Explorer.2'/>
+					</Item>
+					<Item text='Source' name='Source' image='3'>
+						<Scintilla pushstyle='exec:Win32::GUI::Constants::WS_EX_CLIENTEDGE()' name='CODE'/>
+					</Item>
+				</TabStrip>
+			</Item>
+		</WGXSplitter>
+	</Window>
+	<WGXPost><![CDATA[
+	
+		$self->{CODE}->SetLexer(Win32::GUI::Scintilla::SCLEX_PERL);
+		$self->{CODE}->SetKeyWords(0, join(" ", keys %Type));
+		
+		$self->{CODE}->SetProperty("fold", "1");
+		$self->{CODE}->SetIndentationGuides(1);
+		$self->{CODE}->SetUseTabs(1);
+		$self->{CODE}->SetTabWidth(2);
+		$self->{CODE}->SetIndent(2);
+		
+		$self->{CODE}->SetMarginTypeN(1, Win32::GUI::Scintilla::SC_MARGIN_NUMBER);
+		$self->{CODE}->SetMarginWidthN(1, 25);
+		$self->{CODE}->SetMarginTypeN(2, Win32::GUI::Scintilla::SC_MARGIN_SYMBOL);
+		$self->{CODE}->SetMarginMaskN(2, Win32::GUI::Scintilla::SC_MASK_FOLDERS);
+		$self->{CODE}->SetMarginSensitiveN(2, 1);
+		$self->{CODE}->SetMarginWidthN(2, 12);
+		
+		foreach (sort keys %{$registry->{editor}->{Markers}}) {
+			s/^(\|)//;
+			my ($define, $fore, $back) = split(/,/, $registry->{editor}->{Markers}->{$_});
+			$self->{CODE}->MarkerDefine(eval "Win32::GUI::Scintilla::$_", eval "Win32::GUI::Scintilla::$define");
+			$self->{CODE}->MarkerSetFore(eval "Win32::GUI::Scintilla::$_", $fore);
+			$self->{CODE}->MarkerSetBack(eval "Win32::GUI::Scintilla::$_", $back);
+		}
+		
+		$self->{CODE}->StyleClearAll();
+		
+		foreach (sort keys %{$registry->{editor}->{StyleSetSpec}}) {
+			s/^(\|)//;
+			$self->{CODE}->StyleSetSpec(eval "Win32::GUI::Scintilla::$_", $registry->{editor}->{StyleSetSpec}->{$_});
+		}
+		
+		sub CODE_Notify {
+			my (%evt) = @_;
+#			print "$evt{-code} == ".Win32::GUI::Scintilla::SCN_MARGINCLICK."\n";
+			if ($evt{-code} == Win32::GUI::Scintilla::SCN_MARGINCLICK) {
+				foreach (sort keys %evt) { $self->{CODE}->FolderEvent(%evt); }
+			}
+		}
+		
+		our  $ie = $self->{IE}->GetOLE();
+		Win32::OLE->WithEvents($ie,  sub {
+			my ($ie2, $e, @args) = @_;
+			if ($e eq 'BeforeNavigate2' && $args[1]->Value() ne 'about:blank' && $args[1]->Value() !~ /#/) {
+				if (! -f $args[1]->Value()) {
+					my $path = Win32::GetLongPathName($htmlCacheDir);
+					print "BeforeNavigate2 returned ".$args[1]->Value()."\n";
+					(my $file = $args[1]->Value()) =~ s/\Q$path\E\\(.*)\.html/$1/;
+					(my $pod = $file) =~ s/\\/::/g;
+					print "location: ".pod_where( { -inc => 1 }, $pod )."\n";
+					$currentFile = pod_where( { -inc => 1 }, $pod );
+					&loadfile;
+				}
+			}
+		});
+
+		if (-f $ARGV[0]) {
+			$currentFile = $ARGV[0];
+			loadfile();
+		} else {
+			#$ie->Navigate2("about:blank");
+			open DOC, ">$htmlCacheDir/podview_welcome.html";
+			print DOC qq|
+			<html>
+			<head>
+				<link href='$cssFile' type='text/css' rel='stylesheet'>
+			</head>
+			<body>
+				<h1>Welcome to niPerl POD Viewer</h1>
+				Here is a an overview of documentation available (adapted from <a href='perl.html'>perl.pod</a>).
+				If you wish to see module specific documentation please use the Tree View on the left.
+				
+				<table cellspacing=5 cellpadding=5 border=0>
+				<tr>
+				<td>
+					<a href='perlintro.html'>Introduction for beginners</a><br>
+					<a href='perlwin32.html'>Notes for Windows</a><br>
+					<a href='perlreftut.html'>References short introduction</a><br>
+					<a href='perldsc.html'>Data structures intro</a><br>
+					<a href='perllol.html'>Data structures: arrays of arrays</a><br>
+					<a href='perlrequick.html'>Regular expressions quick start</a><br>
+					<a href='perlretut.html'>Regular expressions tutorial</a><br>
+					<a href='perlboot.html'>OO tutorial for beginners</a><br>
+					<a href='perltoot.html'>OO tutorial, part 1</a><br>
+					<a href='perltooc.html'>OO tutorial, part 2</a><br>
+					<a href='perlbot.html'>OO tricks and examples</a><br>
+					<a href='perlstyle.html'>Style guide</a><br>
+					<a href='perlcheat.html'>Cheat sheet</a><br>
+					<a href='perltrap.html'>Traps for the unwary</a><br>
+					<a href='perldebtut.html'>Debugging tutorial</a><br>
+					<a href='perlfaq.html'>Frequently asked questions</a><br>
+					<a href='perlfaq1.html'>General Questions About Perl</a><br>
+					<a href='perlfaq2.html'>Obtaining and Learning about Perl</a><br>
+					<a href='perlfaq3.html'>Programming Tools</a><br>
+					<a href='perlfaq4.html'>Data Manipulation</a><br>
+					<a href='perlfaq5.html'>Files and Formats</a><br>
+					<a href='perlfaq6.html'>Regexes</a><br>
+					<a href='perlfaq7.html'>Perl Language Issues</a><br>
+					<a href='perlfaq8.html'>System Interaction</a><br>
+					<a href='perlfaq9.html'>Networking</a><br>
+					<a href='perlsyn.html'>Syntax</a><br>
+					<a href='perldata.html'>Data structures</a><br>
+					<a href='perlop.html'>Operators and precedence</a><br>
+					<a href='perlsub.html'>Subroutines</a><br>
+					<a href='perlfunc.html'>Built-in functions</a><br>
+					<a href='perlopentut.html'>open() tutorial</a><br>
+					<a href='perlpacktut.html'>pack() and unpack() tutorial</a><br>
+					<a href='perlpod.html'>Plain old documentation</a><br>
+					<a href='perlpodspec.html'>Plain old documentation format specification</a><br>
+					<a href='perlrun.html'>Execution and options</a><br>
+					<a href='perldiag.html'>Diagnostic messages</a><br>
+					<a href='perllexwarn.html'>Warnings and their control</a><br>
+					<a href='perldebug.html'>Debugging</a><br>
+					<a href='perlvar.html'>Predefined variables</a><br>
+					<a href='perlre.html'>Regular expressions, the rest of the story</a><br>
+					<a href='perlreref.html'>Regular expressions quick reference</a><br>
+					<a href='perlref.html'>References, the rest of the story</a><br>
+					<a href='perlform.html'>Formats</a><br>
+				</td><td>
+					<a href='perlobj.html'>Objects</a><br>
+					<a href='perltie.html'>Objects hidden behind simple variables</a><br>
+					<a href='perldbmfilter.html'>DBM filters</a><br>
+					<a href='perlipc.html'>Interprocess communication</a><br>
+					<a href='perlfork.html'>fork() information</a><br>
+					<a href='perlnumber.html'>Number semantics</a><br>
+					<a href='perlthrtut.html'>Threads tutorial</a><br>
+					<a href='perlothrtut.html'>Old Perl threads tutorial</a><br>
+					<a href='perlport.html'>Portability guide</a><br>
+					<a href='perllocale.html'>Locale support</a><br>
+					<a href='perluniintro.html'>Unicode introduction</a><br>
+					<a href='perlunicode.html'>Unicode support</a><br>
+					<a href='perlebcdic.html'>Considerations for running Perl on EBCDIC platforms</a><br>
+					<a href='perlsec.html'>Security</a><br>
+					<a href='perlmod.html'>Modules: how they work</a><br>
+					<a href='perlmodlib.html'>Modules: how to write and use</a><br>
+					<a href='perlmodstyle.html'>Modules: how to write modules with style</a><br>
+					<a href='perlmodinstall.html'>Modules: how to install from CPAN</a><br>
+					<a href='perlnewmod.html'>Modules: preparing a new module for distribution</a><br>
+					<a href='perlutil.html'>Utilities packaged with the Perl distribution</a><br>
+					<a href='perlcompile.html'>Compiler suite intro</a><br>
+					<a href='perlfilter.html'>Source filters</a><br>
+					<a href='perlembed.html'>Ways to embed perl in your C or C++ application</a><br>
+					<a href='perldebguts.html'>Debugging guts and tips</a><br>
+					<a href='perlxstut.html'>XS tutorial</a><br>
+					<a href='perlxs.html'>XS application programming interface</a><br>
+					<a href='perlclib.html'>Internal replacements for standard C library functions</a><br>
+					<a href='perlguts.html'>Internal functions for those doing extensions</a><br>
+					<a href='perlcall.html'>Calling conventions from C</a><br>
+					<a href='perlapi.html'>API listing (autogenerated)</a><br>
+					<a href='perlintern.html'>Internal functions (autogenerated)</a><br>
+					<a href='perliol.html'>C API for Perl's implementation of IO in Layers</a><br>
+					<a href='perlapio.html'>Internal IO abstraction interface</a><br>
+					<a href='perlhack.html'>Hackers guide</a><br>
+					<a href='perlbook.html'>Perl book information</a><br>
+					<a href='perltodo.html'>Things to do</a><br>
+					<a href='perldoc.html'>Look up Perl documentation in Pod format</a><br>
+					<a href='perlartistic.html'>Perl Artistic License</a><br>
+					<a href='perlgpl.html'>GNU General Public License</a><br>
+					<a href='perlcn.html'>Perl for Simplified Chinese (in EUC-CN)</a><br>
+					<a href='perljp.html'>Perl for Japanese (in EUC-JP)</a><br>
+					<a href='perlko.html'>Perl for Korean (in EUC-KR)</a><br>
+					<a href='perltw.html'>Perl for Traditional Chinese (in Big5)</a><br>
+				</td>
+				</tr>
+				</table>
+	
+			</body>
+			</html>
+			|;
+			close DOC;
+			&refreshCSS;
+			push @tmpFiles, "$htmlCacheDir/podview_welcome.html";
+			$ie->Navigate2("file://$htmlCacheDir/podview_welcome.html");
+		}
+
+		sub refreshCSS {
+			open CSS, ">$cssFile";
+			foreach (sort keys %{$registry->{browser}->{CSS}}) {
+				s/^(\|)//;
+				print CSS "$_ { $registry->{browser}->{CSS}->{$_} }\n";
+			}
+			close CSS;
+		}
+		
+		sub loadtree {
+			$self->{LoadTimer}->Kill;
+			$self->{P}->SetRange(0, 10000);
+			$self->{P}->SetStep(1);
+			find({wanted => \&process, no_chdir => 1}, @OURINC);
+			$self->{P}->SetPos($self->{P}->GetMax());
+		}
+
+		sub process {
+			(my $name = $File::Find::name) =~ s/(\/|\\|:)/_/g;
+			(my $parent = $File::Find::dir) =~ s/(\/|\\|:)/_/g;
+			my $qr = qr/$File::Find::dir/;
+			(my $text = $File::Find::name) =~ s/$qr\/(.*)$/$1/;
+			my $image = fileImage($File::Find::name);
+			return if ! defined $image;
+			$text = $File::Find::name if (-d $File::Find::name && $File::Find::name eq $File::Find::dir);
+			my %H = (
+				-item   => 0xFFFF0003,
+				-parent => $self->{$parent},
+				-text   => $text,
+				-image  => $image,
+			);
+			$H{-onExpand} = sub { print "opened" } if $image == 0;
+			$self->{$name} = $self->{PODFileTree}->InsertItem(%H);
+			$self->{PODFileTree}->Sort($self->{$name});
+			$self->{P}->StepIt();
+			Win32::GUI::DoEvents();
+		}
+		
+		sub PODSelect {
+			my ($CurrTree, $node) = @_;
+			my %N = $CurrTree->GetItem($node);
+			my %P = $CurrTree->GetItem($N{-parent});
+			my $path = $N{-text};
+			while ($P{-text} ne '') {
+				$path = $P{-text}."/".$path;
+				%P = $CurrTree->GetItem($P{-parent});
+			}
+			$currentFile = $path;
+			&loadfile;
+		}
+		
+		sub FunctionSelect {
+			my ($CurrTree, $node) = @_;
+			my %N = $CurrTree->GetItem($node);
+			my %P = $CurrTree->GetItem($N{-parent});
+			my $path = $N{-text};
+			while ($P{-text} ne '') {
+				$path = $P{-text}."/".$path;
+				%P = $CurrTree->GetItem($P{-parent});
+			}
+			$self->{CODE}->FindAndSelect("sub $path {");
+		}
+		
+		sub VariableSelect {
+			my ($CurrTree, $node) = @_;
+			my %N = $CurrTree->GetItem($node);
+			my %P = $CurrTree->GetItem($N{-parent});
+			my $path = $N{-text};
+			while ($P{-text} ne '') {
+				$path = $P{-text}."/".$path;
+				%P = $CurrTree->GetItem($P{-parent});
+			}
+			$self->{CODE}->FindAndSelect("$path");
+		}
+		
+		sub PODProps {
+			my ($CurrTree) = @_;
+			my ($X, $Y) = Win32::GUI::GetCursorPos();
+			my ($TVI, $flags) = $CurrTree->HitTest($CurrTree->ScreenToClient($X, $Y));  
+			if ($TVI) {
+				$CurrTree->Select($TVI);
+				my %itemdata = $CurrTree->GetItem($TVI);
+				if ($itemdata{-text} =~ /(?:pl)$/) {
+					$self->{W}->TrackPopupMenu($self->{M2}, $X, $Y);
+				} elsif ($itemdata{-text} =~ /(?:pm)$/) {
+					$self->{W}->TrackPopupMenu($self->{M2}, $X, $Y);
+				} elsif ($itemdata{-text} =~ /(?:pod)$/) {
+					$self->{W}->TrackPopupMenu($self->{M2}, $X, $Y);
+				}
+			}
+		}
+		
+		sub loadfile {
+			return 1 if -d $currentFile;
+			$self->{W}->Caption("POD Viewer - $currentFile");
+			$self->{CODE}->LoadFile($currentFile);
+			deparse();
+			addToTree("HistoryTree", "history");
+			updateHTML();
+		}
+		
+		sub addToTree {
+			my ($tv, $rk) = @_;
+			if ($currentFile =~ /(?:pl)$/) {
+				$self->{$tv}->InsertItem(-image => 4, -text => $currentFile) if ! exists ${$registry->{$rk}}{$currentFile};
+			} 
+			elsif ($currentFile =~ /(?:pm)$/) {
+				$self->{$tv}->InsertItem(-image => 3, -text => $currentFile) if ! exists ${$registry->{$rk}}{$currentFile};
+			} 
+			elsif ($currentFile =~ /(?:pod)$/) {
+				$self->{$tv}->InsertItem(-image => 2, -text => $currentFile) if ! exists ${$registry->{$rk}}{$currentFile};
+			}
+			${$registry->{$rk}}{$currentFile} = 1;
+		}
+		
+		sub Pod::Tree::HTML::LinkMap::url {
+			my($link_map, $html, $target) = @_;
+
+			my $depth = $html->{options}{depth};
+			my $base = join '/', ('..') x $depth;
+		
+			my $page = $target->get_page;
+			$page =~ s(::)(/)g;
+			$page .= '.html' if $page;
+		
+			my $section = $target->get_section;
+			my $fragment = $html->escape_2396 ($section);
+			
+			my $url = $html->assemble_url($base, $page, $fragment);
+			$url
+		}
+		
+		sub updateHTML {
+			my $basename = basename($currentFile);
+			my $dirname  = dirname($currentFile);
+			my $getcwd   = getcwd;
+			
+			&refreshCSS;
+			
+			my $html = new Pod::Tree::HTML "$currentFile", "$htmlCacheDir/$basename.html", css => "$cssFile";
+			
+			if(!$html->{tree}->has_pod()) {
+				$ie->Navigate2("about:blank");
+				$self->{POD}->Hide; $self->{Source}->Show; $self->{View}->Select(1);
+			} else {
+				$html->translate;
+				foreach (<$dirname/*.png>) {
+					copy($_, $htmlCacheDir);
+					push @tmpFiles, $_;
+				}
+				push @tmpFiles, "$htmlCacheDir/$basename.html";
+				$ie->Navigate2("file://$htmlCacheDir/$basename.html");
+				$self->{Source}->Hide; $self->{POD}->Show; $self->{View}->Select(0);
+			}
+		}
+		
+		sub deparse {
+			if (-x $registry->{perl}) {
+				my @lines = `$registry->{perl} -MO=Deparse,-p "$currentFile"`;
+				my (%subs, %anonsubs, %varsrefsubs, %vars);
+				foreach (@lines) {
+					$subs{$1}++ if m/^sub (\w+) \{$/ && $1 ne 'BEGIN';
+					$anonsubs{$1}++ if m/[\$\@\%](\w+)\S* \= sub \{/;
+					$varsrefssubs{$1}++ if m/[\%\$\@](\w+)\S* \= .*\\\&\w+/;
+					$vars{$1}++ if m/([\%\$\@]\w+)\S* \= .*/;
+				}
+				$self->{FunctionTree}->Reset;
+				foreach my $sub (sort keys %subs) {
+					$self->{FunctionTree}->InsertItem(-text => $sub);
+				}
+				$self->{VariableTree}->Reset;
+				foreach my $var (sort keys %vars) {
+					$self->{VariableTree}->InsertItem(-text => $var);
+				}
+			}
+		}
+	]]></WGXPost>
+</GUI>
