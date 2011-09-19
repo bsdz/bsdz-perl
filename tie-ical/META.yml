@@ -3,7 +3,9 @@ abstract: 'Tie iCal files to Perl hashes'
 author:
   - 'Blair Sutton <bsdz@cpan.org>'
 build_requires: {}
-dynamic_config: 0
+configure_requires:
+  Module::Build: 0.38
+dynamic_config: 1
 generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.112150'
 license: perl
 meta-spec:
